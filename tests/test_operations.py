@@ -1,12 +1,21 @@
+from click.testing import CliRunner
+from support import Client
+
+from app.cli import build_cli
+
+
 def test_cli_initialization_and_health(app):
-    runner = app.test_cli_runner()
-    result = runner.invoke(args=["seed-categories"])
+    runner = CliRunner()
+    result = runner.invoke(build_cli(app.state.settings, app.state.session_factory), args=["seed-categories"])
     assert result.exit_code == 0, result.output
     assert (
-        runner.invoke(args=["campus-add", "Example College", "Kanpur", "--domains", "example.edu"]).exit_code
+        runner.invoke(
+            build_cli(app.state.settings, app.state.session_factory),
+            args=["campus-add", "Example College", "Kanpur", "--domains", "example.edu"],
+        ).exit_code
         == 0
     )
-    assert app.test_client().get("/health/ready").status_code == 200
+    assert Client(app).get("/health/ready").status_code == 200
 
 
 def test_public_safety_page(client):
@@ -19,4 +28,4 @@ def test_member_home_has_real_listing(client, people):
     login(client)
     listing(client)
     response = client.get("/")
-    assert b"Calculus textbook" in response.data
+    assert b"Calculus textbook" in response.content

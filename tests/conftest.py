@@ -1,55 +1,69 @@
 import os
 
 import pytest
+from support import Client
+
+from app.config import Settings
+from app.database import Base
+from app.main import build_app
 
 
 @pytest.fixture
 def app(tmp_path):
-    from app import create_app
-    from app.extensions import db
-
     test_url = os.getenv("TEST_DATABASE_URL")
     if test_url:
         from sqlalchemy.engine import make_url
 
         if make_url(test_url).database != "xelo_test":
             raise RuntimeError("TEST_DATABASE_URL must point to the disposable xelo_test database.")
-    application = create_app(
-        {
-            "TESTING": True,
-            "SECRET_KEY": "tests-only-secret",
-            "SQLALCHEMY_DATABASE_URI": os.getenv("TEST_DATABASE_URL", "sqlite://"),
-            "WTF_CSRF_ENABLED": False,
-            "RATELIMIT_ENABLED": False,
-            "UPLOAD_FOLDER": str(tmp_path / "uploads"),
-            "MAIL_FOLDER": str(tmp_path / "mail"),
-            "MAIL_MODE": "file",
-        }
+    application = build_app(
+        Settings(
+            APP_ENV="testing",
+            TESTING=True,
+            SECRET_KEY="tests-only-secret",
+            DATABASE_URL=test_url or "sqlite://",
+            CSRF_ENABLED=False,
+            RATELIMIT_ENABLED=False,
+            UPLOAD_FOLDER=str(tmp_path / "uploads"),
+            MAIL_FOLDER=str(tmp_path / "mail"),
+            MAIL_PROVIDER="file",
+            INSTANCE_PATH=str(tmp_path),
+            BASE_URL="http://127.0.0.1:8000",
+        )
     )
-    with application.app_context():
-        db.create_all()
+    Base.metadata.create_all(application.state.engine)
+    try:
         yield application
-        db.session.remove()
-        db.drop_all()
+    finally:
+        Base.metadata.drop_all(application.state.engine)
+        application.state.engine.dispose()
 
 
 @pytest.fixture
-def client(app):
-    return app.test_client()
+def db(app):
+    with app.state.session_factory() as session:
+        app.state.test_session = session
+        yield session
+        session.rollback()
+        del app.state.test_session
 
 
 @pytest.fixture
-def people(app):
-    from werkzeug.security import generate_password_hash
+def client(app, db):
+    with Client(app) as client:
+        yield client
 
-    from app.extensions import db
+
+@pytest.fixture
+def people(app, db):
     from app.models import Campus, Category, User
+    from app.security import hash_password
 
     campus = Campus(name="North Campus", city="Kanpur", domains="north.edu")
     other = Campus(name="South Campus", city="Delhi", domains="south.edu")
     category = Category(name="Books", slug="books")
-    db.session.add_all([campus, other, category])
-    db.session.flush()
+    db.add_all([campus, other, category])
+    db.flush()
     result = {}
     for name, college, admin in [
         ("seller", campus, False),
@@ -64,11 +78,11 @@ def people(app):
             campus_id=college.id,
             verified=True,
             is_admin=admin,
-            password_hash=generate_password_hash("Correct-horse-123"),
+            password_hash=hash_password("Correct-horse-123"),
         )
-        db.session.add(user)
+        db.add(user)
         result[name] = user
-    db.session.commit()
+    db.commit()
     result["category"] = category
     result["campus"] = campus
     return result

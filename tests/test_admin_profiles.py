@@ -1,9 +1,12 @@
 from pathlib import Path
 
+from click.testing import CliRunner
 from conftest import image_file, login
 
+from app.cli import build_cli
 
-def test_profile_images_edit_remove_and_privacy(client, people, app):
+
+def test_profile_images_edit_remove_and_privacy(client, people, app, db):
     from app.models import User
 
     login(client)
@@ -22,10 +25,10 @@ def test_profile_images_edit_remove_and_privacy(client, people, app):
         "cover": image_file(),
     }
     assert client.post("/profile/edit", data=data, content_type="multipart/form-data").status_code == 302
-    user = User.query.filter_by(username="seller").one()
+    user = db.query(User).filter_by(username="seller").one()
     assert user.phone == "919876543210" and user.avatar and user.cover
     avatar = user.avatar
-    assert client.get("/profile/1/image/avatar").mimetype == "image/webp"
+    assert client.get("/profile/1/image/avatar").headers["content-type"] == "image/webp"
     assert client.get("/profile/1/image/cover").status_code == 200
     assert (
         client.post(
@@ -41,10 +44,10 @@ def test_profile_images_edit_remove_and_privacy(client, people, app):
         == 302
     )
     assert client.get("/profile/1/image/avatar").status_code == 404
-    assert not (Path(app.config["UPLOAD_FOLDER"]) / avatar).exists()
+    assert not (Path(app.state.settings.UPLOAD_FOLDER) / avatar).exists()
 
 
-def test_admin_category_and_campus_management(client, people):
+def test_admin_category_and_campus_management(client, people, db):
     from app.models import AdminAction, Campus, Category
 
     login(client, "admin")
@@ -62,7 +65,7 @@ def test_admin_category_and_campus_management(client, people):
         ).status_code
         == 302
     )
-    c = Category.query.filter_by(name="Electronics").one()
+    c = db.query(Category).filter_by(name="Electronics").one()
     assert c.active
     assert (
         client.post(
@@ -70,7 +73,7 @@ def test_admin_category_and_campus_management(client, people):
         ).status_code
         == 302
     )
-    assert not Category.query.filter_by(id=c.id).one().active
+    assert not db.query(Category).filter_by(id=c.id).one().active
     assert (
         client.post(
             "/admin/campus",
@@ -84,12 +87,11 @@ def test_admin_category_and_campus_management(client, people):
         ).status_code
         == 302
     )
-    assert Campus.query.filter_by(name="New College").one().domains == "college.edu"
-    assert AdminAction.query.count() == 3
+    assert db.query(Campus).filter_by(name="New College").one().domains == "college.edu"
+    assert db.query(AdminAction).count() == 3
 
 
-def test_admin_report_resolution_review_moderation(client, people):
-    from app.extensions import db
+def test_admin_report_resolution_review_moderation(client, people, db):
     from app.models import Notification, Product, Report, Review
 
     login(client, "admin")
@@ -103,13 +105,11 @@ def test_admin_report_resolution_review_moderation(client, people):
         price=10,
         status="sold",
     )
-    db.session.add(p)
-    db.session.flush()
-    db.session.add(Review(product_id=p.id, reviewer_id=2, seller_id=1, rating=4, body="Good exchange"))
-    db.session.add(
-        Report(reporter_id=2, kind="product", target_id=p.id, reason="other", description="Please review")
-    )
-    db.session.commit()
+    db.add(p)
+    db.flush()
+    db.add(Review(product_id=p.id, reviewer_id=2, seller_id=1, rating=4, body="Good exchange"))
+    db.add(Report(reporter_id=2, kind="product", target_id=p.id, reason="other", description="Please review"))
+    db.commit()
     for action in ["resolve_report", "hide_review"]:
         target = "1"
         assert (
@@ -119,20 +119,20 @@ def test_admin_report_resolution_review_moderation(client, people):
             ).status_code
             == 302
         )
-    assert Report.query.one().status == "resolved"
-    assert Review.query.one().hidden
-    assert Notification.query.count() == 2
+    assert db.query(Report).one().status == "resolved"
+    assert db.query(Review).one().hidden
+    assert db.query(Notification).count() == 2
 
 
-def test_cli_admin_and_maintenance(app, people):
+def test_cli_admin_and_maintenance(app, people, db):
     from datetime import timedelta
 
-    from app.extensions import db
     from app.models import SearchHistory, User
     from app.models.identity import now
 
-    runner = app.test_cli_runner()
+    runner = CliRunner()
     result = runner.invoke(
+        build_cli(app.state.settings, app.state.session_factory),
         args=[
             "create-admin",
             "--email",
@@ -143,28 +143,27 @@ def test_cli_admin_and_maintenance(app, people):
             "1",
             "--password",
             "Extra-admin-password-123",
-        ]
+        ],
     )
     assert result.exit_code == 0, result.output
-    assert User.query.filter_by(username="secondadmin").one().is_admin
-    db.session.add(SearchHistory(user_id=1, term="old query", created_at=now() - timedelta(days=40)))
-    db.session.commit()
-    result = runner.invoke(args=["maintenance"])
+    assert db.query(User).filter_by(username="secondadmin").one().is_admin
+    db.add(SearchHistory(user_id=1, term="old query", created_at=now() - timedelta(days=40)))
+    db.commit()
+    result = runner.invoke(build_cli(app.state.settings, app.state.session_factory), args=["maintenance"])
     assert result.exit_code == 0, result.output
-    assert SearchHistory.query.count() == 0
+    assert db.query(SearchHistory).count() == 0
 
 
-def test_notifications_counts_mark_read_and_search_history(client, people):
-    from app.extensions import db
+def test_notifications_counts_mark_read_and_search_history(client, people, db):
     from app.models import Notification, SearchHistory
 
     login(client)
-    db.session.add(Notification(user_id=1, kind="system", title="Account update", link="/profile/edit"))
-    db.session.add(SearchHistory(user_id=1, term="book"))
-    db.session.commit()
-    assert client.get("/notifications/counts").json == {"notifications": 1, "messages": 0}
+    db.add(Notification(user_id=1, kind="system", title="Account update", link="/profile/edit"))
+    db.add(SearchHistory(user_id=1, term="book"))
+    db.commit()
+    assert client.get("/notifications/counts").json() == {"notifications": 1, "messages": 0}
     assert client.post("/notifications/read-all").status_code == 302
-    assert client.get("/notifications/counts").json["notifications"] == 0
-    assert b"book" in client.get("/history").data
+    assert client.get("/notifications/counts").json()["notifications"] == 0
+    assert b"book" in client.get("/history").content
     assert client.post("/history/clear").status_code == 302
-    assert SearchHistory.query.count() == 0
+    assert db.query(SearchHistory).count() == 0

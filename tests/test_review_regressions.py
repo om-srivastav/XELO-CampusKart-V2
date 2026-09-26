@@ -1,26 +1,25 @@
 from conftest import image_file, listing, login
+from support import Client
 
 
-def test_confirmed_sale_cannot_change_buyer(client, people, app):
-    from app.extensions import db
+def test_confirmed_sale_cannot_change_buyer(client, people, app, db):
     from app.models import Conversation, Product
 
     login(client)
     listing(client)
-    p = Product.query.one()
+    p = db.query(Product).one()
     p.status = "sold"
     p.buyer_id = 2
     p.sale_confirmed = True
-    db.session.add(Conversation(product_id=1, buyer_id=4, seller_id=1))
-    db.session.commit()
+    db.add(Conversation(product_id=1, buyer_id=4, seller_id=1))
+    db.commit()
     response = client.post("/market/1/status", data={"status": "sold", "buyer_id": "4"})
     assert response.status_code in (400, 409)
-    db.session.expire_all()
-    assert Product.query.one().buyer_id == 2
+    db.expire_all()
+    assert db.query(Product).one().buyer_id == 2
 
 
-def test_private_profile_hides_listing_contacts(client, people, app):
-    from app.extensions import db
+def test_private_profile_hides_listing_contacts(client, people, app, db):
     from app.models import AnalyticsEvent
 
     login(client)
@@ -31,25 +30,24 @@ def test_private_profile_hides_listing_contacts(client, people, app):
     u.show_whatsapp = True
     u.phone = "919876543210"
     u.whatsapp = u.phone
-    db.session.commit()
-    buyer = app.test_client()
+    db.commit()
+    buyer = Client(app)
     login(buyer, "buyer")
     response = buyer.get("/market/1")
-    assert b"9876543210" not in response.data
-    assert b"Chat on WhatsApp" not in response.data
+    assert b"9876543210" not in response.content
+    assert b"Chat on WhatsApp" not in response.content
     assert buyer.post("/market/1/whatsapp").status_code == 404
-    assert AnalyticsEvent.query.filter_by(kind="whatsapp").count() == 0
+    assert db.query(AnalyticsEvent).filter_by(kind="whatsapp").count() == 0
 
 
-def test_password_change_invalidates_reset_links(client, people):
+def test_password_change_invalidates_reset_links(client, people, db):
     from datetime import timedelta
 
-    from app.extensions import db
     from app.models import AccountToken
     from app.models.identity import now
-    from app.services.security import digest
+    from app.security import digest
 
-    db.session.add(
+    db.add(
         AccountToken(
             user_id=1,
             token_hash=digest("old-link"),
@@ -57,7 +55,7 @@ def test_password_change_invalidates_reset_links(client, people):
             expires_at=now() + timedelta(minutes=20),
         )
     )
-    db.session.commit()
+    db.commit()
     login(client)
     client.post(
         "/auth/password",
@@ -70,21 +68,20 @@ def test_password_change_invalidates_reset_links(client, people):
     assert client.get("/auth/reset/old-link").status_code == 400
 
 
-def test_reset_invalidates_other_reset_links(client, people):
+def test_reset_invalidates_other_reset_links(client, people, db):
     from datetime import timedelta
 
-    from app.extensions import db
     from app.models import AccountToken
     from app.models.identity import now
-    from app.services.security import digest
+    from app.security import digest
 
     for raw in ("link-one", "link-two"):
-        db.session.add(
+        db.add(
             AccountToken(
                 user_id=1, token_hash=digest(raw), purpose="reset", expires_at=now() + timedelta(minutes=20)
             )
         )
-    db.session.commit()
+    db.commit()
     assert (
         client.post(
             "/auth/reset/link-one",
@@ -95,7 +92,7 @@ def test_reset_invalidates_other_reset_links(client, people):
     assert client.get("/auth/reset/link-two").status_code == 400
 
 
-def test_partial_image_write_is_cleaned(client, people, app, monkeypatch):
+def test_partial_image_write_is_cleaned(client, people, app, monkeypatch, db):
     from pathlib import Path
 
     from app.models import Product
@@ -103,7 +100,7 @@ def test_partial_image_write_is_cleaned(client, people, app, monkeypatch):
 
     login(client)
     listing(client)
-    root = Path(app.config["UPLOAD_FOLDER"])
+    root = Path(app.state.settings.UPLOAD_FOLDER)
     before = {p.name for p in root.iterdir()}
     original = LocalImageStorage.put
 
@@ -128,4 +125,4 @@ def test_partial_image_write_is_cleaned(client, people, app, monkeypatch):
     )
     assert response.status_code in (400, 503)
     assert {p.name for p in root.iterdir()} == before
-    assert len(Product.query.one().images) == 1
+    assert len(db.query(Product).one().images) == 1

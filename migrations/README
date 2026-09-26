@@ -1,1 +1,7 @@
-Single-database configuration for Flask.
+Run migrations directly from the project root: python -m alembic upgrade head.
+The original initial revision 599b567a41fc is retained unchanged. All 18 table
+names, columns, foreign keys, indexes and constraint names are preserved.
+Models now inherit SQLAlchemy DeclarativeBase with explicit __tablename__.
+SearchHistory.term still maps to the database column named query.
+Existing databases stamped at 599b567a41fc need no schema or data conversion.
+Use python -m alembic check to verify model/schema agreement.

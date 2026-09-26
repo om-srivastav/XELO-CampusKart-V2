@@ -14,6 +14,7 @@ const assert = require("assert");
   await p.locator("[name=email]").fill("buyer@qa.test");
   await p.locator("[name=password]").fill("QA-browser-password-123");
   await p.getByRole("button", { name: "Sign in", exact: false }).click();
+  await p.waitForURL("**/profile/edit");
   for (const width of [320, 390, 768, 1440]) {
     await p.setViewportSize({ width, height: 900 });
     for (const path of [
@@ -56,7 +57,7 @@ const assert = require("assert");
   await f.goto("http://127.0.0.1:5001");
   await f.getByRole("heading", { name: /Good finds/ }).waitFor();
   assert(await f.locator(".orb").isVisible());
-  await f.getByRole("link", { name: "Join your campus" }).click();
+  await f.getByRole("link", { name: "Sign up", exact: true }).click();
   assert(f.url().includes("/auth/signup"));
   assert.deepEqual(errors, []);
   console.log(

@@ -1,81 +1,86 @@
 from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
+from fastapi.testclient import TestClient
+from sqlalchemy import inspect
+
+from app.config import Settings
+from app.database import Base
+from app.main import build_app
+
+
+def production_settings(**overrides):
+    values = dict(
+        APP_ENV="production",
+        SECRET_KEY="0123456789abcdef" * 4,
+        DATABASE_URL="postgresql+psycopg://test:test@localhost/xelo_test",
+        BASE_URL="https://localhost",
+        TRUSTED_HOSTS=["localhost"],
+        MAIL_PROVIDER="resend",
+        MAIL_API_KEY="test-only-key",
+        MAIL_FROM="xelo@example.test",
+        REDIS_URL="redis://localhost:6379/0",
+        RATELIMIT_ENABLED=False,
+        DEBUG=True,
+    )
+    values.update(overrides)
+    return Settings(**values)
+
 
 def test_migration_upgrade_downgrade(tmp_path):
-    from flask_migrate import downgrade, upgrade
-    from sqlalchemy import inspect
-
-    from app import create_app
-    from app.extensions import db
-
-    app = create_app(
-        {
-            "TESTING": True,
-            "SECRET_KEY": "migration-test",
-            "SQLALCHEMY_DATABASE_URI": "sqlite:///" + str(tmp_path / "migrated.db"),
-            "RATELIMIT_ENABLED": False,
-        }
+    app = build_app(
+        Settings(
+            APP_ENV="testing",
+            SECRET_KEY="migration-test",
+            DATABASE_URL="sqlite:///" + str(tmp_path / "migrated.db"),
+            RATELIMIT_ENABLED=False,
+        )
     )
-    with app.app_context():
-        directory = str(Path(__file__).resolve().parents[1] / "migrations")
-        upgrade(directory=directory)
-        assert "product" in inspect(db.engine).get_table_names()
-        downgrade(directory=directory, revision="base")
-        assert "product" not in inspect(db.engine).get_table_names()
-        upgrade(directory=directory)
-        assert "user_session" in inspect(db.engine).get_table_names()
+    cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    cfg.attributes["settings"] = app.state.settings
+    command.upgrade(cfg, "head")
+    assert "product" in inspect(app.state.engine).get_table_names()
+    command.check(cfg)
+    command.downgrade(cfg, "base")
+    assert "product" not in inspect(app.state.engine).get_table_names()
+    command.upgrade(cfg, "head")
+    assert "user_session" in inspect(app.state.engine).get_table_names()
+    app.state.engine.dispose()
 
 
 def test_production_cookie_and_headers():
-    from app import create_app
-
-    app = create_app(
-        {
-            "APP_ENV": "production",
-            "SECRET_KEY": "a" * 40,
-            "SQLALCHEMY_DATABASE_URI": "postgresql+psycopg://test:test@localhost/xelo_test",
-            "SMTP_HOST": "smtp.example.test",
-            "SMTP_FROM": "xelo@example.test",
-            "BASE_URL": "https://localhost",
-            "MAIL_MODE": "smtp",
-            "RATELIMIT_STORAGE_URI": "redis://localhost:6379/0",
-            "RATELIMIT_ENABLED": False,
-            "DEBUG": True,
-        }
-    )
-    assert app.config["DEBUG"] is False
-    assert app.config["SESSION_COOKIE_SECURE"] is True
-    response = app.test_client().get("/auth/login", base_url="https://localhost")
-    assert "Secure" in response.headers["Set-Cookie"]
-    assert "HttpOnly" in response.headers["Set-Cookie"]
-    assert "SameSite=Lax" in response.headers["Set-Cookie"]
-    assert "max-age=" in response.headers["Strict-Transport-Security"]
+    app = build_app(production_settings())
+    assert app.state.settings.DEBUG is False
+    assert app.state.settings.SESSION_COOKIE_SECURE is True
+    with TestClient(app, base_url="https://localhost") as client:
+        response = client.get("/auth/login")
+    assert "secure" in response.headers["set-cookie"].lower()
+    assert "httponly" in response.headers["set-cookie"].lower()
+    assert "samesite=lax" in response.headers["set-cookie"].lower()
+    assert "max-age=" in response.headers["strict-transport-security"]
 
 
 def test_login_rate_limit_is_enforced(tmp_path):
-    from app import create_app
-    from app.extensions import db
-
-    app = create_app(
-        {
-            "TESTING": True,
-            "SECRET_KEY": "rate-test",
-            "SQLALCHEMY_DATABASE_URI": "sqlite://",
-            "WTF_CSRF_ENABLED": False,
-            "RATELIMIT_ENABLED": True,
-            "RATELIMIT_STORAGE_URI": "memory://",
-        }
+    app = build_app(
+        Settings(
+            APP_ENV="testing",
+            SECRET_KEY="rate-test",
+            DATABASE_URL="sqlite://",
+            CSRF_ENABLED=False,
+            RATELIMIT_ENABLED=True,
+            REDIS_URL="memory://",
+        )
     )
-    with app.app_context():
-        db.create_all()
-        client = app.test_client()
+    Base.metadata.create_all(app.state.engine)
+    with TestClient(app) as client:
         statuses = [
             client.post(
                 "/auth/login", data={"email": "unknown@example.edu", "password": "wrong-password"}
             ).status_code
             for _ in range(11)
         ]
-        assert statuses[-1] == 429
-        assert 401 in statuses
-        db.session.remove()
-        db.drop_all()
+    assert statuses[-1] == 429
+    assert 401 in statuses
+    Base.metadata.drop_all(app.state.engine)
+    app.state.engine.dispose()

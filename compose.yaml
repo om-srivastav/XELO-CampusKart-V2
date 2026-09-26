@@ -1,0 +1,67 @@
+# Local stack. Set production settings in .env before hosting behind an HTTPS proxy.
+x-app: &app
+  image: xelo-fastapi:local
+  build: .
+  environment:
+    APP_ENV: ${APP_ENV:-development}
+    SECRET_KEY: ${SECRET_KEY:-}
+    DATABASE_URL: postgresql+psycopg://xelo:${POSTGRES_PASSWORD:-local-development-only}@postgres:5432/xelo
+    REDIS_URL: redis://redis:6379/0
+    BASE_URL: ${BASE_URL:-http://localhost:8000}
+    TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1}
+    MAIL_PROVIDER: ${MAIL_PROVIDER:-file}
+    MAIL_API_KEY: ${MAIL_API_KEY:-}
+    MAIL_FROM: ${MAIL_FROM:-}
+  volumes:
+    - app_data:/data
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: xelo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+      POSTGRES_DB: xelo
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xelo -d xelo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  migrate:
+    <<: *app
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  web:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request,urllib.parse; req=urllib.request.Request('http://localhost:8000/health/live',headers={'Host':urllib.parse.urlsplit(os.environ.get('BASE_URL','http://localhost:8000')).netloc}); urllib.request.urlopen(req,timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+volumes:
+  app_data:
+  postgres_data:
+  redis_data:

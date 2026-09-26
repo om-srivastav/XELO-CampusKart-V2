@@ -1,11 +1,11 @@
 import re
 from decimal import Decimal, InvalidOperation
 
-from flask import abort, request
+from ..web import abort
 
 
-def field(name, minimum=0, maximum=200, default=""):
-    value = request.form.get(name, default).strip()
+def field(request, name, minimum=0, maximum=200, default=""):
+    value = request.state.form.get(name, default).strip()
     if not minimum <= len(value) <= maximum:
         abort(400, f"{name.replace('_', ' ').title()} must contain {minimum}–{maximum} characters.")
     return value
@@ -46,9 +46,9 @@ def phone(value):
     return number
 
 
-def password():
-    value = request.form.get("password", "")
-    if len(value) < 12 or len(value) > 128 or value != request.form.get("confirm"):
+def password(request):
+    value = request.state.form.get("password", "")
+    if len(value) < 12 or len(value) > 128 or value != request.state.form.get("confirm"):
         abort(400, "Passwords must match and contain 12–128 characters.")
     return value
 

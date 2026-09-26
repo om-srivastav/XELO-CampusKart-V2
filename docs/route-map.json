@@ -1,0 +1,381 @@
+[
+  {
+    "module": "auth",
+    "function": "signup",
+    "path": "/auth/signup",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "login",
+    "path": "/auth/login",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "logout",
+    "path": "/auth/logout",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "change_password",
+    "path": "/auth/password",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "forgot",
+    "path": "/auth/forgot",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "token_action",
+    "path": "/auth/{purpose}/{token}",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "sessions",
+    "path": "/auth/sessions",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "revoke",
+    "path": "/auth/sessions/{sid:int}/revoke",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "revoke_others",
+    "path": "/auth/sessions/revoke-others",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "deactivate",
+    "path": "/auth/deactivate",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "auth",
+    "function": "form_token",
+    "path": "/auth/form-token",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "browse",
+    "path": "/market",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "suggest",
+    "path": "/market/suggest",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "create",
+    "path": "/market/new",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "edit",
+    "path": "/market/{pid:int}/edit",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "images",
+    "path": "/market/{pid:int}/images",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "status",
+    "path": "/market/{pid:int}/status",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "delete",
+    "path": "/market/{pid:int}/delete",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "detail",
+    "path": "/market/{pid:int}",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "whatsapp",
+    "path": "/market/{pid:int}/whatsapp",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "marketplace",
+    "function": "image",
+    "path": "/market/image/{key}",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "profiles",
+    "function": "edit",
+    "path": "/profile/edit",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "profiles",
+    "function": "show",
+    "path": "/profile/{uid:int}",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "profiles",
+    "function": "image",
+    "path": "/profile/{uid:int}/image/{kind}",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "messaging",
+    "function": "index",
+    "path": "/messages",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "messaging",
+    "function": "start",
+    "path": "/messages/start/{pid:int}",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "messaging",
+    "function": "conversation",
+    "path": "/messages/{cid:int}",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "messaging",
+    "function": "poll",
+    "path": "/messages/{cid:int}/poll",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "messaging",
+    "function": "read",
+    "path": "/messages/{cid:int}/read",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "notifications",
+    "function": "index",
+    "path": "/notifications",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "notifications",
+    "function": "counts",
+    "path": "/notifications/counts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "notifications",
+    "function": "read",
+    "path": "/notifications/{nid:int}/read",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "notifications",
+    "function": "read_all",
+    "path": "/notifications/read-all",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "wishlist",
+    "function": "index",
+    "path": "/wishlist",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "wishlist",
+    "function": "toggle",
+    "path": "/wishlist/{pid:int}",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "reviews",
+    "function": "confirm",
+    "path": "/reviews/{pid:int}/confirm",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "reviews",
+    "function": "review",
+    "path": "/reviews/{pid:int}",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "reports",
+    "function": "create",
+    "path": "/reports/new",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "module": "reports",
+    "function": "index",
+    "path": "/reports",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "analytics",
+    "function": "index",
+    "path": "/dashboard",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "analytics",
+    "function": "history",
+    "path": "/history",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "analytics",
+    "function": "clear_history",
+    "path": "/history/clear",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "admin",
+    "function": "index",
+    "path": "/admin",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "module": "admin",
+    "function": "action",
+    "path": "/admin/action",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "admin",
+    "function": "category",
+    "path": "/admin/category",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "module": "admin",
+    "function": "campus",
+    "path": "/admin/campus",
+    "methods": [
+      "POST"
+    ]
+  }
+]
