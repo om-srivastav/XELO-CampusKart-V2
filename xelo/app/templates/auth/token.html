@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Secure your account · XELO{% endblock %}{% block content %}<div class="container narrow"><span class="eyebrow">YOUR CAMPUS CONNECTION</span><h1 class="form-title">Secure your account</h1><div class="card"><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if purpose=="reset" %}<label>New password<input name="password"
+       type="password"
+       minlength="12"
+       maxlength="128"
+       autocomplete="new-password"
+       required></label><label>Confirm password<input name="confirm" type="password" autocomplete="new-password" required></label>{% else %}<p>Confirm your campus email to unlock your marketplace.</p>{% endif %}<button class="primary">{{ 'Reset password' if purpose=='reset' else 'Verify email' }}</button></form></div></div>{% endblock %}

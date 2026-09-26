@@ -1,0 +1,35 @@
+.filter-open {
+  margin-bottom: 18px;
+  justify-self: start;
+}
+.filter-open[hidden],
+.filters[hidden] {
+  display: none;
+}
+.filter-dialog {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90dvh;
+  margin: auto auto 0;
+  padding: 22px;
+}
+.filter-dialog::backdrop {
+  background: #07120c99;
+}
+.filter-dialog > .filters {
+  border: 0;
+  padding: 20px 0 0;
+}
+.filter-dialog > .filters summary {
+  display: none;
+}
+.filter-dialog > .filters form {
+  display: block;
+}
+.filter-dialog > button {
+  float: right;
+}

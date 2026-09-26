@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Find your people. · Xelo{% endblock %}
+{% block content %}
+<div class="container narrow">
+  <span class="eyebrow">YOUR CAMPUS CONNECTION</span>
+  <h1 class="form-title">Find your people.</h1>
+  <div class="card">
+    <p>Create your campus account. No strangers in your feed.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Display name<input name="display_name" type="text" maxlength="80" required></label>
+      <label>Username<input name="username" type="text" pattern="[a-zA-Z0-9_]{3,40}" autocomplete="username" required></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>College name<input name="college_name" type="text" minlength="2" maxlength="120" placeholder="Enter your college's full name" autocomplete="organization" aria-describedby="college-help" required></label>
+      <p id="college-help" class="help">Type your college's full official name. You can enter any college.</p>
+      <label>Password (12–128 characters)<input name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+      <label>Confirm password<input name="confirm" type="password" autocomplete="new-password" required></label>
+      <button class="primary" type="submit">Create account →</button>
+    </form>
+    <p class="help">Create your account and start exploring your campus marketplace.</p>
+    <a href="/auth/login">Already a member? Sign in</a>
+  </div>
+</div>
+{% endblock %}

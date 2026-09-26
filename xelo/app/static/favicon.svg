@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<title>XELO</title>
+<g transform="rotate(-7 32 32)">
+<rect x="4" y="4" width="56" height="56" rx="16" fill="#f0f6ec"/>
+<path d="M17 20h12l5 8 5-8h12L40 36l10 16H38l-5-9-6 9H15l11-16z" fill="#102019"/>
+</g>
+</svg>

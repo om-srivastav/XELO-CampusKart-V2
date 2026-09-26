@@ -1,0 +1,12 @@
+{
+  "name": "xelo-browser-tests",
+  "private": true,
+  "description": "Optional browser QA only; XELO is a Python Flask application.",
+  "scripts": {
+    "test:browser": "node tests/browser_flow.cjs",
+    "test:layout": "node tests/browser_layout.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

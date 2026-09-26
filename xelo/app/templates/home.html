@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+    <section class="hero">
+        <div class="hero-art" aria-hidden="true">
+            <canvas id="scene"></canvas>
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="orb"></div>
+            <span class="art-label">LESS WASTE. MORE POSSIBILITIES.</span>
+        </div>
+        <div class="hero-copy">
+            <span class="eyebrow"><span class="status-dot"></span> YOUR CAMPUS. YOUR COMMUNITY.</span>
+            <h1>
+                Good finds.
+                <br>
+                Great prices.
+                <br>
+                <em>Right here.</em>
+            </h1>
+            <p>
+                Your next favorite thing might be a few doors away.
+                <br>
+                Give pre-loved essentials a new chapter on campus.
+            </p>
+            <div class="actions"><a class="button primary"
+   href="{{ '/market' if g.user else '/auth/signup' }}">Explore your campus ↗</a><a class="button"
+   href="{{ '/market/new' if g.user else '/auth/login' }}">Sell an item</a></div>
+            <div class="hero-note"><span>↗</span> Made for students. Built around trust.</div>
+        </div>
+    </section>
+    <section class="section" id="how">
+        <div class="section-heading">
+            <span class="eyebrow">THE CAMPUS CIRCULAR</span>
+            <h2>
+                A little less buying new.
+                <br>
+                A lot more finding your people.
+            </h2>
+        </div>
+        <div class="steps">
+            <article><span class="step-number">01</span>
+                <h3>Join your campus</h3>
+                <p>Enter your college name and connect with your college community.</p>
+            </article><article><span class="step-number">02</span>
+                <h3>Find it. Or list it.</h3>
+                <p>Discover useful things nearby or give your own essentials another life.</p>
+            </article><article><span class="step-number">03</span>
+                <h3>Make the connection</h3>
+                <p>Talk directly, agree on the details, and meet safely on campus.</p>
+            </article>
+        </div>
+    </section>
+    {% if g.user %}<section class="section home-market"><div class="page-heading"><div><span class="eyebrow">{{ g.user.campus.name }}</span><h2>Fresh on campus.</h2></div><a href="/market">Explore all finds ↗</a></div><div class="category-strip">{% for c in categories %}<a href="/market?category={{ c.id }}">{{ c.name }}</a>{% endfor %}</div><div class="grid">{% for product in latest %}{% include "marketplace/card.html" %}{% else %}<p>Your campus marketplace starts with its first listing. <a href="/market/new">Make it yours</a>.</p>{% endfor %}</div>{% if trending %}<div class="page-heading"><h2>Catching everyone's eye.</h2></div><div class="grid">{% for product in trending %}{% include "marketplace/card.html" %}{% endfor %}</div>{% endif %}</section>{% endif %}<section class="section benefits"><article class="cta-panel"><span class="eyebrow">SMALL DISTANCE. BIG DIFFERENCE.</span><h2>One campus.<br>More possibilities.</h2><p>Useful things deserve another chapter. Find them nearby, skip the shipping, and connect with your community.</p><a class="button primary" href="/market">Find your next favorite ↗</a></article><article class="cta-panel"><span class="eyebrow">BUILT AROUND TRUST</span><h2>Your community.<br>Your peace of mind.</h2><p>Campus communities, private messaging, contact controls and a way to report problems. You're in control of how you connect.</p><a href="/safety">A guide to safe exchanges ↗</a></article></section>{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}<div class="container chat-container"><a href="/messages">← Inbox</a><div class="page-heading"><div><h1>{{ conversation.seller.display_name if conversation.buyer_id==g.user.id else conversation.buyer.display_name }}</h1><a href="/market/{{ conversation.product_id }}">{{ conversation.product.title }}</a></div><span class="badge">Private conversation</span></div>{% if older %}<a class="button" href="?before={{ messages[0].id }}">Older messages</a>{% endif %}{% if historical %}<a class="button" href="/messages/{{ conversation.id }}">Latest messages</a>{% endif %}<div id="messages"
+     class="messages"
+     data-conversation="{{ conversation.id }}"
+     data-after="{{ messages[-1].id if messages else 0 }}"
+     data-historical="{{ 'true' if historical else 'false' }}"
+     aria-live="polite">{% for m in messages %}<article class="message {{ 'mine' if m.sender_id==g.user.id else '' }}"
+         data-message-id="{{ m.id }}"><strong>{{ m.sender.display_name }}</strong><p>{{ m.body }}</p><small>{{ m.created_at.strftime("%d %b %H:%M") }} UTC · {{ 'Read' if m.read_at else 'Sent' }}</small><a href="/reports/new?kind=message&target={{ m.id }}">Report</a></article>{% else %}<p class="message-empty">Say hello and ask about the listing.</p>{% endfor %}</div><form method="post" class="message-compose"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="body">Your message</label><textarea id="body"
+          name="body"
+          maxlength="3000"
+          minlength="1"
+          required
+          placeholder="Ask a question or arrange a campus pickup…"></textarea><button class="primary">Send message →</button><p class="help">Messages refresh automatically while this page is open. Never share passwords or OTPs.</p></form></div>{% endblock %}

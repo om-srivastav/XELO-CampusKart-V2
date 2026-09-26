@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2"><meta name="color-scheme" content="light dark"><meta name="description"
+      content="XELO CampusKart. Buy, sell and connect within your campus."><meta name="csrf-token" content="{{ csrf_token() }}"><title>{% block title %}XELO — CampusKart{% endblock %}</title><script src="{{ url_for('static',filename='js/theme.js') }}"></script><link rel="stylesheet"
+      href="{{ url_for('static',filename='css/app.css') }}"><link rel="stylesheet"
+      href="{{ url_for('static',filename='css/market.css') }}"><link rel="stylesheet"
+      href="{{ url_for('static',filename='css/mobile-filters.css') }}"><script type="module"
+        src="{{ url_for('static',filename='js/mobile-filters.js') }}"></script><script type="module"
+        src="{{ url_for('static',filename='js/interactions.js') }}"></script><script type="module" src="{{ url_for('static',filename='js/app.js') }}"></script><script type="module" src="{{ url_for('static',filename='js/forms.js') }}"></script><script type="module" src="{{ url_for('static',filename='js/account-menu.js') }}"></script></head>
+    <body><a class="skip" href="#main">Skip to content</a><header class="site-header">
+  <a class="logo" href="/" aria-label="XELO-(Campus Kart) home"><span class="logo-mark" aria-hidden="true">x</span><span class="logo-copy"><span class="logo-name">XELO-(Campus Kart)</span><span class="logo-slogan">Buy Smart Sell Easy</span></span></a>
+  <nav aria-label="Main navigation"><a href="/">Home</a>
+    {% if g.user %}
+    <a href="/market">Explore</a>
+    <a href="/messages">Inbox <span class="badge-count" data-unread="messages"></span></a>
+    <a href="/notifications">Updates <span class="badge-count" data-unread="notifications"></span></a>
+    <a href="/market/new" class="button primary">+ Sell an item</a>
+    {% else %}
+    <a href="/#how">How it works</a>
+    <a href="/auth/login">Login</a>
+    <a class="button primary" href="/auth/signup">Sign up</a>
+    {% endif %}
+  </nav>
+  <div class="header-controls">
+    <label class="theme-label"><span>Theme</span><select id="theme" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    {% if g.user %}
+    <details class="account-menu">
+      <summary><span class="account-initial" aria-hidden="true">{{ g.user.display_name[0]|upper }}</span><span>Profile</span><span aria-hidden="true">⌄</span></summary>
+      <div class="account-panel">
+        <div class="account-identity"><strong>{{ g.user.display_name }}</strong><small>@{{ g.user.username }}</small></div>
+        <a href="/profile/{{ g.user.id }}">My profile</a>
+        <a href="/profile/edit">Profile &amp; privacy settings</a>
+        <a href="/dashboard">My listings &amp; dashboard</a>
+        <a href="/wishlist">Saved items</a>
+        <div class="account-divider"></div>
+        <a href="/auth/password">Change password</a>
+        <a href="/auth/sessions">Account security &amp; sessions</a>
+        {% if g.user.is_admin %}<a href="/admin">Administration</a>{% endif %}
+        <a href="/safety">Help &amp; campus safety</a>
+        <form method="post" action="/auth/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Log out</button></form>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</header>
+        <main id="main">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ category }}" role="status">{{ message }}</div>{% endfor %}{% block content %}{% endblock %}</main>
+        <footer>
+            <a class="logo" href="/"><span class="logo-copy"><span class="logo-name">XELO-(Campus Kart)</span><span class="logo-slogan">Buy Smart Sell Easy</span></span></a>
+            <span>Built for your next chapter.</span><a href="/safety">Campus safety</a>
+        </footer>
+        <div id="toast" role="status" aria-live="polite"></div>
+    </body>
+</html>
