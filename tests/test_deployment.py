@@ -35,6 +35,7 @@ def test_migration_upgrade_downgrade(tmp_path):
             SECRET_KEY="migration-test",
             DATABASE_URL="sqlite:///" + str(tmp_path / "migrated.db"),
             RATELIMIT_ENABLED=False,
+            TRUSTED_HOSTS=["localhost", "127.0.0.1", "testserver"],
         )
     )
     cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
@@ -70,6 +71,7 @@ def test_login_rate_limit_is_enforced(tmp_path):
             CSRF_ENABLED=False,
             RATELIMIT_ENABLED=True,
             REDIS_URL="memory://",
+            TRUSTED_HOSTS=["localhost", "127.0.0.1", "testserver"],
         )
     )
     Base.metadata.create_all(app.state.engine)

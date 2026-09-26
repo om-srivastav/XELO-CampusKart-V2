@@ -22,6 +22,7 @@ def app(tmp_path):
             TESTING=True,
             SECRET_KEY="tests-only-secret",
             DATABASE_URL=test_url or "sqlite://",
+            TRUSTED_HOSTS=["localhost", "127.0.0.1", "testserver"],
             CSRF_ENABLED=False,
             RATELIMIT_ENABLED=False,
             UPLOAD_FOLDER=str(tmp_path / "uploads"),
