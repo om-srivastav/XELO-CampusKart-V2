@@ -37,7 +37,7 @@ def build_app(settings=None):
         https_only=settings.SESSION_COOKIE_SECURE,
         max_age=settings.SESSION_HOURS * 3600,
     )
-    application.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.TRUSTED_HOSTS)
+    application.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
     application.add_middleware(SecurityMiddleware, settings=settings)
     application.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 
