@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import PlainTextResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from .config import Settings
 from .database import Session, get_db, make_engine, make_session_factory
@@ -39,6 +40,7 @@ def build_app(settings=None):
     )
     application.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
     application.add_middleware(SecurityMiddleware, settings=settings)
+    application.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
     application.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 
     @application.exception_handler(HTTPException)
